@@ -15,6 +15,7 @@ import ru.netology.nmedia.adapter.OnInteractionListener
 import ru.netology.nmedia.adapter.PostsAdapter
 import ru.netology.nmedia.databinding.FragmentFeedBinding
 import ru.netology.nmedia.dto.Post
+import ru.netology.nmedia.operation.Operation
 import ru.netology.nmedia.viewmodel.PostViewModel
 
 class FeedFragment : Fragment() {
@@ -34,7 +35,7 @@ class FeedFragment : Fragment() {
             }
 
             override fun onLike(post: Post) {
-                viewModel.likeById(post.id)
+                viewModel.likeByPost(post)
             }
 
             override fun onRemove(post: Post) {
@@ -58,9 +59,17 @@ class FeedFragment : Fragment() {
             binding.progress.isVisible = state.loading
             binding.swiperefresh.isRefreshing = state.refreshing
             if (state.error) {
-                Snackbar.make(binding.root, R.string.error_loading, Snackbar.LENGTH_LONG)
-                    .setAction(R.string.retry_loading) { viewModel.loadPosts() }
-                    .show()
+                when (viewModel.lastOperationCode) {
+                    Operation.LOAD -> Snackbar.make(binding.root,R.string.error_loading,Snackbar.LENGTH_LONG)
+                        .setAction(R.string.retry){viewModel.loadPosts()}.show()
+                    Operation.SAVE -> Snackbar.make(binding.root,R.string.error_saving,Snackbar.LENGTH_LONG)
+                        .setAction(R.string.retry,){viewModel.save()}.show()
+                    Operation.DELETE -> Snackbar.make(binding.root,R.string.error_deleting,Snackbar.LENGTH_LONG)
+                        .setAction(R.string.retry,){viewModel.removeById(viewModel.lastId)}.show()
+                    Operation.LIKE -> Snackbar.make(binding.root,R.string.error_liking,Snackbar.LENGTH_LONG)
+                        .setAction(R.string.retry,){viewModel.likeByPost(viewModel.lastPost)}.show()
+                    else -> {}
+                }
             }
         }
         viewModel.data.observe(viewLifecycleOwner) { state ->

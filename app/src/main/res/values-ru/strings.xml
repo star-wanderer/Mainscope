@@ -21,4 +21,8 @@
     <string name="notification_user_liked">%1$s поставил лайк посту %2$s</string>
     <string name="channel_remote_name">Уведомления с сервера</string>
     <string name="channel_remote_description">Уведомления с удалённого сервера</string>
+    <string name="error_saving">Ошибка сохранения</string>
+    <string name="error_liking">Ошибка лайка</string>
+    <string name="error_deleting">Ошибка удаления</string>
+    <string name="retry">Повтор:</string>
 </resources>
