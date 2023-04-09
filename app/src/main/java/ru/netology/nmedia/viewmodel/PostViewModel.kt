@@ -7,6 +7,7 @@ import ru.netology.nmedia.db.AppDb
 import ru.netology.nmedia.dto.Post
 import ru.netology.nmedia.model.FeedModel
 import ru.netology.nmedia.model.FeedModelState
+import ru.netology.nmedia.operation.Operation
 import ru.netology.nmedia.repository.PostRepository
 import ru.netology.nmedia.repository.PostRepositoryImpl
 import ru.netology.nmedia.util.SingleLiveEvent
@@ -36,11 +37,16 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     val postCreated: LiveData<Unit>
         get() = _postCreated
 
+    var lastId: Long = 0
+    var lastPost: Post = empty
+    var lastOperationCode: Operation = Operation.NONE
+
     init {
         loadPosts()
     }
 
     fun loadPosts() = viewModelScope.launch {
+        lastOperationCode = Operation.LOAD
         try {
             _dataState.value = FeedModelState(loading = true)
             repository.getAll()
@@ -61,6 +67,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun save() {
+        lastOperationCode = Operation.SAVE
         edited.value?.let {
             _postCreated.value = Unit
             viewModelScope.launch {
@@ -77,6 +84,7 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
 
     fun edit(post: Post) {
         edited.value = post
+        lastOperationCode = Operation.EDIT
     }
 
     fun changeContent(content: String) {
@@ -87,11 +95,25 @@ class PostViewModel(application: Application) : AndroidViewModel(application) {
         edited.value = edited.value?.copy(content = text)
     }
 
-    fun likeById(id: Long) {
-        TODO()
+    fun likeByPost(post: Post) = viewModelScope.launch {
+        lastPost = post
+        lastOperationCode = Operation.LIKE
+        try {
+            repository.likeById(post)
+        }
+        catch (e: Exception){
+            _dataState.value = FeedModelState(error = true)
+        }
     }
 
-    fun removeById(id: Long) {
-        TODO()
+    fun removeById(id: Long) = viewModelScope.launch {
+        lastId = id
+        lastOperationCode = Operation.DELETE
+        try {
+            repository.removeById(id)
+        }
+        catch (e: Exception) {
+            _dataState.value = FeedModelState(error = true)
+        }
     }
 }
